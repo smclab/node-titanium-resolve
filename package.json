@@ -1,0 +1,29 @@
+{
+  "name": "titanium-resolve",
+  "version": "0.1.0",
+  "description": "resolve which handles titanium field support in package.json",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/smclab/node-titanium-resolve.git"
+  },
+  "keywords": [
+    "resolve",
+    "browser"
+  ],
+  "author": {
+    "name": "Pier Paolo Ramon",
+    "email": "pierpaolo.ramon@smc.it",
+    "url": "https://github.com/yuchi"
+  },
+  "license": "LGPL2.1",
+  "dependencies": {
+    "resolve": "0.6.1"
+  },
+  "devDependencies": {
+    "mocha": "1.14.0"
+  }
+}
