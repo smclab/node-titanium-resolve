@@ -19,7 +19,7 @@
     "email": "pierpaolo.ramon@smc.it",
     "url": "https://github.com/yuchi"
   },
-  "license": "LGPL2.1",
+  "license": "LGPL-2.1",
   "dependencies": {
     "resolve": "0.6.1"
   },
