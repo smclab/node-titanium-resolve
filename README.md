@@ -4,6 +4,12 @@ node.js resolve algorithm with *titanium* and [browser](https://gist.github.com/
 
 It’s a fork of the original [browser-resolve](https://github.com/defunctzombie/node-browser-resolve).
 
+Install it with:
+
+```prompt
+npm install --save titanium-resolve
+```
+
 
 ## Credits
 
