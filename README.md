@@ -1,4 +1,5 @@
-# titanium-resolve
+titanium-resolve
+================
 
 node.js resolve algorithm with *titanium* and [browser](https://gist.github.com/defunctzombie/4339901) field support.
 
@@ -11,13 +12,13 @@ npm install --save titanium-resolve
 ```
 
 
-## Credits
+Credits
+-------
 
 Kudos to [@defunctzombie](https://github.com/defunctzombie) for the original implementation.
 
 Humbly made by the spry ladies and gents at SMC.
 
-# License
 
 License
 -------
