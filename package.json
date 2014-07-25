@@ -1,6 +1,6 @@
 {
   "name": "titanium-resolve",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "resolve which handles titanium field support in package.json",
   "main": "index.js",
   "scripts": {
