@@ -217,6 +217,11 @@ function resolve(id, opts, cb) {
                     return info;
                 }
 
+                var substitute = (info.titanium || info.browser);
+                Object.keys(substitute).forEach(function (p) {
+                  substitute[path.normalize(p)] = path.normalize(substitute[p]);
+                });
+
                 var replace_main = (info.titanium || info.browser)[info.main || './index.js'];
                 info.main = replace_main || info.main;
 
@@ -234,4 +239,3 @@ function resolve(id, opts, cb) {
 };
 
 module.exports = resolve;
-
