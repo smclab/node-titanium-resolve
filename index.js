@@ -219,7 +219,9 @@ function resolve(id, opts, cb) {
 
                 var substitute = (info.titanium || info.browser);
                 Object.keys(substitute).forEach(function (p) {
-                  substitute[path.normalize(p)] = path.normalize(substitute[p]);
+                    if (typeof substitute[p] === 'string') {
+                        substitute[path.normalize(p)] = path.normalize(substitute[p]);
+                    }
                 });
 
                 var replace_main = (info.titanium || info.browser)[info.main || './index.js'];
