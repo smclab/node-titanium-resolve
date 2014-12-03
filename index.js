@@ -14,9 +14,8 @@ function nodeModulesPaths (start, cb) {
     var dirs = [];
     for (var i = parts.length - 1; i >= 0; i--) {
         if (parts[i] === 'node_modules') continue;
-        var dir = path.join(
-            path.join.apply(path, parts.slice(0, i + 1)),
-            'node_modules'
+        var dir = path.join.apply(
+            path, parts.slice(0, i + 1).concat(["node_modules"])
         );
         if (!parts[0].match(/([A-Za-z]:)/)) {
             dir = '/' + dir;
@@ -24,6 +23,58 @@ function nodeModulesPaths (start, cb) {
         dirs.push(dir);
     }
     return dirs;
+}
+
+function find_shims_in_package(pkgJson, cur_path, shims) {
+    try {
+        var info = JSON.parse(pkgJson);
+    }
+    catch (err) {
+        err.message = pkgJson + ' : ' + err.message
+        throw err;
+    }
+
+    // support legacy browserify field for easier migration from legacy
+    // many packages used this field historically
+    if (typeof info.browserify === 'string' && !info.browser) {
+        info.browser = info.browserify;
+    }
+
+    // no replacements, skip shims
+    if (!info.browser) {
+        return;
+    }
+
+    // if browser field is a string
+    // then it just replaces the main entry point
+    if (typeof info.browser === 'string') {
+        var key = path.resolve(cur_path, info.main || 'index.js');
+        shims[key] = path.resolve(cur_path, info.browser);
+        return;
+    }
+
+    // http://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders
+    Object.keys(info.browser).forEach(function(key) {
+        if (info.browser[key] === false) {
+            return shims[key] = __dirname + '/empty.js';
+        }
+
+        var val = info.browser[key];
+
+        // if target is a relative path, then resolve
+        // otherwise we assume target is a module
+        if (val[0] === '.') {
+            val = path.resolve(cur_path, val);
+        }
+
+        // if does not begin with / ../ or ./ then it is a module
+        if (key[0] !== '/' && key[0] !== '.') {
+            return shims[key] = val;
+        }
+
+        key = path.resolve(cur_path, key);
+        shims[key] = val;
+    });
 }
 
 // paths is mutated
@@ -51,83 +102,79 @@ function load_shims(paths, cb) {
 
                 return cb(err);
             }
-
             try {
-                var info = JSON.parse(data);
+                find_shims_in_package(data, cur_path, shims);
+                return cb(null, shims);
             }
             catch (err) {
-                err.message = pkg_path + ' : ' + err.message
                 return cb(err);
             }
+        });
+    })();
+};
 
-            // support legacy browserify field for easier migration from legacy
-            // many packages used this field historically
+// paths is mutated
+// synchronously load shims from first package.json file found
+function load_shims_sync(paths) {
+    // identify if our file should be replaced per the browser field
+    // original filename|id -> replacement
+    var shims = {};
+    var cur_path;
+
+    while (cur_path = paths.shift()) {
+        var pkg_path = path.join(cur_path, 'package.json');
+
+        try {
+            var data = fs.readFileSync(pkg_path, 'utf8');
+            find_shims_in_package(data, cur_path, shims);
+            return shims;
+        }
+        catch (err) {
+            // ignore paths we can't open
+            // avoids an exists check
+            if (err.code === 'ENOENT') {
+                continue;
+            }
+
+            throw err;
+        }
+    }
+    return shims;
+}
+
+function build_resolve_opts(opts, base) {
+    return {
+        paths: opts.paths,
+        extensions: opts.extensions,
+        basedir: base,
+        package: opts.package,
+        packageFilter: function (info, pkgdir) {
+            if (opts.packageFilter) info = opts.packageFilter(info, pkgdir);
+
+            // support legacy browserify field
             if (typeof info.browserify === 'string' && !info.browser) {
                 info.browser = info.browserify;
             }
 
-            var hasBrowser = info.browser != null;
-            var hasTitanium = info.titanium != null;
-            var useBrowser = hasBrowser && (!hasTitanium || info.titanium.useBrowser);
-
-            // no replacements, skip shims
-            if (!hasTitanium && !hasBrowser) {
-                return cb(null, shims);
+            // no browser field, keep info unchanged
+            if (!info.browser) {
+                return info;
             }
 
-            var prev, key;
-
-            if (typeof info.titanium === 'string') {
-                prev = info.titanium;
-                info.titanium = {};
-                info.titanium[ info.main || 'index.js' ] = prev;
-            }
-
+            // replace main
             if (typeof info.browser === 'string') {
-                prev = info.browser;
-                info.browser = {};
-                info.browser[ info.main || 'index.js' ] = prev;
+                info.main = info.browser;
+                return info;
             }
 
-            // Merging browser into titanium, if doable
-            if (hasTitanium && useBrowser) {
-                Object.keys(info.browser).forEach(function (key) {
-                    if (!info.titanium.hasOwnProperty(key)) {
-                        info.titanium[key] = info.browser[key];
-                    }
-                });
-            }
+            var replace_main = info.browser[info.main || './index.js'] ||
+                info.browser['./' + info.main || './index.js'];
 
-            if (hasTitanium) {
-                delete info.titanium.useBrowser;
-            }
-
-            // http://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders
-            Object.keys(info.titanium || info.browser).forEach(function(key) {
-                var val = (info.titanium || info.browser)[key];
-
-                if (val === false) {
-                    return shims[key] = __dirname + '/empty.js';
-                }
-
-                // if target is a relative path, then resolve
-                // otherwise we assume target is a module
-                if (val[0] === '.') {
-                    val = path.resolve(cur_path, val);
-                }
-
-                // if does not begin with / ../ or ./ then it is a module
-                if (key[0] !== '/' && key[0] !== '.' && key !== info.main) {
-                    return shims[key] = val;
-                }
-
-                var key = path.resolve(cur_path, key);
-                shims[key] = val;
-            });
-            return cb(null, shims);
-        });
-    })();
-};
+            info.main = replace_main || info.main;
+            return info;
+        }
+    };
+}
 
 function resolve(id, opts, cb) {
 
@@ -149,20 +196,11 @@ function resolve(id, opts, cb) {
         return path.dirname(p);
     });
 
-    //console.log('=============');
-    //console.dir(id);
-    //console.dir(opts);
-    //console.trace();
-
     // we must always load shims because the browser field could shim out a module
     load_shims(paths, function(err, shims) {
         if (err) {
             return cb(err);
         }
-
-        //console.log('-----------');
-        //console.dir(id);
-        //console.dir(shims);
 
         if (shims[id]) {
             // if the shim was is an absolute path, it was fully resolved
@@ -180,56 +218,9 @@ function resolve(id, opts, cb) {
             return cb(null, shim_path);
         }
 
-        //console.dir(id);
-        //console.dir(shims);
-        //console.trace();
-
         // our browser field resolver
         // if browser field is an object tho?
-        var full = resv(id, {
-            paths: opts.paths,
-            extensions: opts.extensions,
-            basedir: base,
-            package: opts.package,
-            packageFilter: function(info, pkgdir) {
-                if (opts.packageFilter) info = opts.packageFilter(info, pkgdir);
-
-                // support legacy browserify field
-                if (typeof info.browserify === 'string' && !info.browser) {
-                    info.browser = info.browserify;
-                }
-
-                var hasBrowser = info.browser != null;
-                var hasTitanium = info.titanium != null;
-                var useBrowser = hasBrowser && (!hasTitanium || info.titanium.useBrowser);
-
-                if (!hasTitanium && !hasBrowser) {
-                    return info;
-                }
-
-                if (typeof info.titanium === 'string') {
-                    info.main = info.titanium;
-                    return info;
-                }
-
-                if (typeof info.browser === 'string' && useBrowser) {
-                    info.main = info.browser;
-                    return info;
-                }
-
-                var substitute = (info.titanium || info.browser);
-                Object.keys(substitute).forEach(function (p) {
-                    if (typeof substitute[p] === 'string') {
-                        substitute[path.normalize(p)] = path.normalize(substitute[p]);
-                    }
-                });
-
-                var replace_main = (info.titanium || info.browser)[info.main || './index.js'];
-                info.main = replace_main || info.main;
-
-                return info;
-            }
-        }, function(err, full, pkg) {
+        var full = resv(id, build_resolve_opts(opts, base), function(err, full, pkg) {
             if (err) {
                 return cb(err);
             }
@@ -240,4 +231,51 @@ function resolve(id, opts, cb) {
     });
 };
 
+resolve.sync = function (id, opts) {
+
+    // opts.filename
+    // opts.paths
+    // opts.modules
+    // opts.packageFilter
+
+    opts = opts || {};
+
+    var base = path.dirname(opts.filename);
+    var paths = nodeModulesPaths(base);
+
+    if (opts.paths) {
+        paths.push.apply(paths, opts.paths);
+    }
+
+    paths = paths.map(function(p) {
+        return path.dirname(p);
+    });
+
+    // we must always load shims because the browser field could shim out a module
+    var shims = load_shims_sync(paths);
+
+    if (shims[id]) {
+        // if the shim was is an absolute path, it was fully resolved
+        if (shims[id][0] === '/') {
+            return shims[id];
+        }
+
+        // module -> alt-module shims
+        id = shims[id];
+    }
+
+    var modules = opts.modules || {};
+    var shim_path = modules[id];
+    if (shim_path) {
+        return shim_path;
+    }
+
+    // our browser field resolver
+    // if browser field is an object tho?
+    var full = resv.sync(id, build_resolve_opts(opts, base));
+
+    return (shims) ? shims[full] || full : full;
+};
+
 module.exports = resolve;
+
