@@ -1,6 +1,11 @@
 titanium-resolve
 ================
 
+[![Build Status](https://img.shields.io/travis/smclab/node-titanium-resolve.svg?style=flat-square)](https://travis-ci.org/smclab/node-titanium-resolve)
+[![Dependencies](https://david-dm.org/smclab/node-titanium-resolve/status.svg?style=flat-square)](https://david-dm.org/smclab/node-titanium-resolve#info=dependencies)
+[![Dev Dependencies](https://david-dm.org/smclab/node-titanium-resolve/dev-status.svg?style=flat-square)](https://david-dm.org/smclab/node-titanium-resolve#info=devDependencies)
+[![Available on NPM](https://img.shields.io/npm/v/titanium-resolve.svg?style=flat-square)](https://www.npmjs.org/package/titanium-resolve)
+
 node.js resolve algorithm with *titanium* and [browser](https://gist.github.com/defunctzombie/4339901) field support.
 
 It’s a fork of the original [browser-resolve](https://github.com/defunctzombie/node-browser-resolve).
