@@ -34,32 +34,26 @@ function find_shims_in_package(pkgJson, cur_path, shims) {
         throw err;
     }
 
-    // support legacy browserify field for easier migration from legacy
-    // many packages used this field historically
-    if (typeof info.browserify === 'string' && !info.browser) {
-        info.browser = info.browserify;
-    }
-
     // no replacements, skip shims
-    if (!info.browser) {
+    if (!info.titanium) {
         return;
     }
 
     // if browser field is a string
     // then it just replaces the main entry point
-    if (typeof info.browser === 'string') {
+    if (typeof info.titanium === 'string') {
         var key = path.resolve(cur_path, info.main || 'index.js');
-        shims[key] = path.resolve(cur_path, info.browser);
+        shims[key] = path.resolve(cur_path, info.titanium);
         return;
     }
 
     // http://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders
-    Object.keys(info.browser).forEach(function(key) {
-        if (info.browser[key] === false) {
+    Object.keys(info.titanium).forEach(function(key) {
+        if (info.titanium[key] === false) {
             return shims[key] = __dirname + '/empty.js';
         }
 
-        var val = info.browser[key];
+        var val = info.titanium[key];
 
         // if target is a relative path, then resolve
         // otherwise we assume target is a module
@@ -151,24 +145,19 @@ function build_resolve_opts(opts, base) {
         packageFilter: function (info, pkgdir) {
             if (opts.packageFilter) info = opts.packageFilter(info, pkgdir);
 
-            // support legacy browserify field
-            if (typeof info.browserify === 'string' && !info.browser) {
-                info.browser = info.browserify;
-            }
-
             // no browser field, keep info unchanged
-            if (!info.browser) {
+            if (!info.titanium) {
                 return info;
             }
 
             // replace main
-            if (typeof info.browser === 'string') {
-                info.main = info.browser;
+            if (typeof info.titanium === 'string') {
+                info.main = info.titanium;
                 return info;
             }
 
-            var replace_main = info.browser[info.main || './index.js'] ||
-                info.browser['./' + info.main || './index.js'];
+            var replace_main = info.titanium[info.main || './index.js'] ||
+                info.titanium['./' + info.main || './index.js'];
 
             info.main = replace_main || info.main;
             return info;
@@ -278,4 +267,3 @@ resolve.sync = function (id, opts) {
 };
 
 module.exports = resolve;
-
