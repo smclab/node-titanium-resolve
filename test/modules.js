@@ -23,60 +23,60 @@ test('alternate main', function(done) {
     });
 });
 
-// package.json has 'browser' field which is a string
-test('string browser field as main', function(done) {
+// package.json has 'titanium' field which is a string
+test('string titanium field as main', function(done) {
     resolve('module-c', { paths: [ fixtures_dir ], package: { main: 'fixtures' } }, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-c/browser'));
-        assert.equal(pkg.main, './browser.js');
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-c/titanium'));
+        assert.equal(pkg.main, './titanium.js');
         done();
     });
 });
 
-// package.json has 'browser' field which is a string
-test('string browser field as main - require subfile', function(done) {
+// package.json has 'titanium' field which is a string
+test('string titanium field as main - require subfile', function(done) {
     var parent = {
-        filename: fixtures_dir + '/module-c/browser.js',
+        filename: fixtures_dir + '/module-c/titanium.js',
         paths: [ fixtures_dir + '/module-c/node_modules' ],
-        package: { main: './browser.js' }
+        package: { main: './titanium.js' }
     };
 
     resolve('./bar', parent, function(err, path, pkg) {
         assert.ifError(err);
         assert.equal(path, require.resolve('./fixtures/node_modules/module-c/bar'));
-        assert.equal(pkg.main, './browser.js');
+        assert.equal(pkg.main, './titanium.js');
         done();
     });
 });
 
-// package.json has browser field as object
+// package.json has titanium field as object
 // one of the keys replaces the main file
 // this would be done if the user needed to replace main and some other module
-test('object browser field as main', function(done) {
+test('object titanium field as main', function(done) {
     resolve('module-d', { paths: [ fixtures_dir ], package: { main: 'fixtures' } }, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-d/browser'));
-        assert.equal(pkg.main, './browser.js');
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-d/titanium'));
+        assert.equal(pkg.main, './titanium.js');
         done();
     });
 });
 
-// package.json has browser field as object
+// package.json has titanium field as object
 // one of the keys replaces the main file
-// however the main has no prefix and browser uses ./ prefix for the same file
-test('object browser field as main', function(done) {
+// however the main has no prefix and titanium uses ./ prefix for the same file
+test('object titanium field as main', function(done) {
     resolve('module-k', { paths: [ fixtures_dir ], package: { main: 'fixtures' } }, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-k/browser'));
-        assert.equal(pkg.main, './browser.js');
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-k/titanium'));
+        assert.equal(pkg.main, './titanium.js');
         done();
     });
 });
 
-// browser field in package.json maps ./foo.js -> ./browser.js
+// titanium field in package.json maps ./foo.js -> ./titanium.js
 // when we resolve ./foo while in module-e, this mapping should take effect
-// the result is that ./foo resolves to ./browser
-test('object browser field replace file', function(done) {
+// the result is that ./foo resolves to ./titanium
+test('object titanium field replace file', function(done) {
     var parent = {
         filename: fixtures_dir + '/module-e/main.js',
         package: { main: './main.js' }
@@ -84,13 +84,13 @@ test('object browser field replace file', function(done) {
 
     resolve('./foo', parent, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-e/browser'));
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-e/titanium'));
         assert.equal(pkg.main, './main.js');
         done();
     });
 });
 
-// browser field in package.json maps "module" -> "alternate module"
+// titanium field in package.json maps "module" -> "alternate module"
 test('test foobar -> module-b replacement', function(done) {
     var parent = {
         filename: fixtures_dir + '/module-h/index.js',
@@ -114,14 +114,14 @@ test('test core -> module-c replacement', function(done) {
 
     resolve('querystring', parent, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-c/browser'));
-        assert.equal(pkg.main, './browser.js');
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-c/titanium'));
+        assert.equal(pkg.main, './titanium.js');
         done();
     });
 });
 
-// browser field in package.json maps "module" -> "alternate module"
-test('test foobar -> module-b replacement with transform', function(done) {
+// titanium field in package.json maps "module" -> "alternate module"
+false && test('test foobar -> module-b replacement with transform', function(done) {
     var parent = {
         filename: fixtures_dir + '/module-i/index.js',
         package: { main: './index.js' }
@@ -135,7 +135,7 @@ test('test foobar -> module-b replacement with transform', function(done) {
     });
 });
 
-test('test foobar -> module-i replacement with transform in replacement', function(done) {
+false && test('test foobar -> module-i replacement with transform in replacement', function(done) {
     var parent = {
         filename: fixtures_dir + '/module-j/index.js',
         package: { main: './index.js' }
@@ -145,15 +145,15 @@ test('test foobar -> module-i replacement with transform in replacement', functi
         assert.ifError(err);
         assert.equal(path, require.resolve('./fixtures/node_modules/module-i/index'));
         assert.equal(pkg.main, './index.js');
-        assert.equal(pkg.browser['foobar'], 'module-b');
-        assert.equal(pkg.browserify.transform, 'deamdify');
+        assert.equal(pkg.titanium['foobar'], 'module-b');
+        assert.equal(pkg.titaniumify.transform, 'deamdify');
         done();
     });
 });
 
 // same as above, but without a paths field in parent
 // should still checks paths on the filename of parent
-test('object browser field replace file - no paths', function(done) {
+test('object titanium field replace file - no paths', function(done) {
     var parent = {
         filename: fixtures_dir + '/module-f/lib/main.js',
         package: { main: './lib/main.js' }
@@ -161,13 +161,13 @@ test('object browser field replace file - no paths', function(done) {
 
     resolve('./foo', parent, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-f/lib/browser'));
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-f/lib/titanium'));
         assert.equal(pkg.main, './lib/main.js');
         done();
     });
 });
 
-test('replace module in browser field object', function(done) {
+test('replace module in titanium field object', function(done) {
     var parent = {
         filename: fixtures_dir + '/module-g/index.js',
         package: { main: './index.js' }
@@ -175,7 +175,7 @@ test('replace module in browser field object', function(done) {
 
     resolve('foobar', parent, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/module-g/foobar-browser'));
+        assert.equal(path, require.resolve('./fixtures/node_modules/module-g/foobar-titanium'));
         assert.equal(pkg.main, './index.js');
         done();
     });
@@ -189,8 +189,7 @@ test('override engine shim', function(done) {
     };
     resolve('url', parent, function(err, path, pkg) {
         assert.ifError(err);
-        assert.equal(path, require.resolve('./fixtures/node_modules/override-engine-shim/url-browser'));
+        assert.equal(path, require.resolve('./fixtures/node_modules/override-engine-shim/url-titanium'));
         done();
     });
 });
-
