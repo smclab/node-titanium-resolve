@@ -5,6 +5,8 @@ var path = require('path');
 // vendor
 var resv = require('resolve');
 
+var has = Object.prototype.hasOwnProperty;
+
 // given a path, create an array of node_module paths for it
 // borrowed from substack/resolve
 function nodeModulesPaths (start, cb) {
@@ -191,7 +193,7 @@ function resolve(id, opts, cb) {
             return cb(err);
         }
 
-        if (shims[id]) {
+        if (has.call(shims, id)) {
             // if the shim was is an absolute path, it was fully resolved
             if (shims[id][0] === '/') {
                 return cb(null, shims[id], opts.package);
@@ -202,7 +204,7 @@ function resolve(id, opts, cb) {
         }
 
         var modules = opts.modules || {};
-        var shim_path = modules[id];
+        var shim_path = has.call(modules, id) ? modules[id] : undefined;
         if (shim_path) {
             return cb(null, shim_path);
         }
@@ -243,7 +245,7 @@ resolve.sync = function (id, opts) {
     // we must always load shims because the browser field could shim out a module
     var shims = load_shims_sync(paths);
 
-    if (shims[id]) {
+    if (has.call(shims, id)) {
         // if the shim was is an absolute path, it was fully resolved
         if (shims[id][0] === '/') {
             return shims[id];
@@ -254,7 +256,7 @@ resolve.sync = function (id, opts) {
     }
 
     var modules = opts.modules || {};
-    var shim_path = modules[id];
+    var shim_path = var shim_path = has.call(modules, id) ? modules[id] : undefined;
     if (shim_path) {
         return shim_path;
     }
