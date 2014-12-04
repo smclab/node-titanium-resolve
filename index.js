@@ -256,7 +256,7 @@ resolve.sync = function (id, opts) {
     }
 
     var modules = opts.modules || {};
-    var shim_path = var shim_path = has.call(modules, id) ? modules[id] : undefined;
+    var shim_path = has.call(modules, id) ? modules[id] : undefined;
     if (shim_path) {
         return shim_path;
     }
