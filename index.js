@@ -37,25 +37,51 @@ function find_shims_in_package(pkgJson, cur_path, shims) {
     }
 
     // no replacements, skip shims
-    if (!info.titanium) {
+    if (!info.titanium && !info.browser) {
         return;
     }
 
-    // if browser field is a string
+    // if titanium field is a string
     // then it just replaces the main entry point
     if (typeof info.titanium === 'string') {
         var key = path.resolve(cur_path, info.main || 'index.js');
         shims[key] = path.resolve(cur_path, info.titanium);
         return;
     }
+    // if there’s no titanium field, and browser field is a string
+    // then it just replaces the main entry point
+    else if (!info.titanium && (typeof info.browser === 'string')) {
+        var key = path.resolve(cur_path, info.main || 'index.js');
+        shims[key] = path.resolve(cur_path, info.browser);
+        return;
+    }
+
+    var obj = {};
+
+    if (info.titanium) {
+        Object.keys(info.titanium).forEach(function (key) {
+            obj[key] = true;
+        });
+    }
+
+    if (info.browser && (typeof info.browser !== 'string')) {
+        Object.keys(info.browser).forEach(function (key) {
+            obj[key] = true;
+        });
+    }
 
     // http://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders
-    Object.keys(info.titanium).forEach(function(key) {
-        if (info.titanium[key] === false) {
+    Object.keys(obj).forEach(function(key) {
+        var val =
+            (info.titanium && has.call(info.titanium, key)) ?
+                info.titanium[key] :
+            (info.browser && has.call(info.browser, key)) ?
+                info.browser[key] :
+            undefined;
+
+        if (val === false) {
             return shims[key] = __dirname + '/empty.js';
         }
-
-        var val = info.titanium[key];
 
         // if target is a relative path, then resolve
         // otherwise we assume target is a module
@@ -148,7 +174,7 @@ function build_resolve_opts(opts, base) {
             if (opts.packageFilter) info = opts.packageFilter(info, pkgdir);
 
             // no browser field, keep info unchanged
-            if (!info.titanium) {
+            if (!info.titanium && !info.browser) {
                 return info;
             }
 
@@ -157,11 +183,18 @@ function build_resolve_opts(opts, base) {
                 info.main = info.titanium;
                 return info;
             }
+            else if (!info.titanium && (typeof info.browser === 'string')) {
+                info.main = info.browser;
+                return info;
+            }
 
-            var replace_main = info.titanium[info.main || './index.js'] ||
-                info.titanium['./' + info.main || './index.js'];
+            info.main =
+                (info.titanium && (info.titanium[info.main || './index.js'])) ||
+                (info.titanium && (info.titanium['./' + info.main || './index.js'])) ||
+                (info.browser && (info.browser[info.main || './index.js'])) ||
+                (info.browser && (info.browser['./' + info.main || './index.js'])) ||
+                info.main;
 
-            info.main = replace_main || info.main;
             return info;
         }
     };
